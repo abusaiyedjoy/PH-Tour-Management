@@ -15,6 +15,20 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
   });
 };
 
+const updateUser = async (req: Request, res: Response, next: NextFunction) => {
+  const userId  = req.params.id;
+  const verifiedToken = req.user;
+  const payload = req.body;
+  const user = await UserService.updateUser(userId, payload, verifiedToken);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "User updated successfully",
+    data: user,
+  });
+};
+
 const getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
   const users = await UserService.getAllUsers();
 
@@ -29,4 +43,5 @@ const getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
 export const UserController = {
   createUser,
   getAllUsers,
+  updateUser,
 };
