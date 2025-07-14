@@ -3,8 +3,10 @@ import { IUser } from "../user/user.interface";
 import httpStatus from "http-status-codes";
 import bcryptjs from "bcryptjs";
 import { User } from "../user/user.model";
-import { envVars } from "../../config/env";
-import { generateToken } from "../../utils/jwt";
+import {
+  createNewAccessTokenWithRefreshToken,
+  createUserToken,
+} from "../../utils/userToken";
 
 const credentialLogin = async (payload: Partial<IUser>) => {
   const { email, password } = payload;
@@ -24,21 +26,30 @@ const credentialLogin = async (payload: Partial<IUser>) => {
     throw new AppError(httpStatus.UNAUTHORIZED, "Invalid password");
   }
 
-  const jwtPayload = {
-    id: isUserExist._id,
-    email: isUserExist.email,
-    role: isUserExist.role,
-  };
+  const userTokens = createUserToken(isUserExist);
 
-  const accessToken = generateToken(
-    jwtPayload,
-    envVars.JWT_ACCESS_SECRET,
-    envVars.JWT_ACCESS_EXPIRES
+  // delete isUserExist.password;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { password: pass, ...user } = isUserExist.toObject();
+
+  return {
+    accessToken: userTokens.accessToken,
+    refreshToken: userTokens.refreshToken,
+    user: user,
+  };
+};
+
+const getNewAccessToken = async (refreshToken: string) => {
+  const newAccessToken = await createNewAccessTokenWithRefreshToken(
+    refreshToken
   );
 
-  return { accessToken };
+  return {
+    accessToken: newAccessToken,
+  };
 };
 
 export const authService = {
   credentialLogin,
+  getNewAccessToken,
 };
